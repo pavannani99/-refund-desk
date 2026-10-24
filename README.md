@@ -50,7 +50,7 @@ flowchart LR
 ## Run it
 
 ```bash
-git clone https://github.com/pavankumarsimhadri987/refund-desk && cd refund-desk
+git clone https://github.com/pavannani99/refund-desk && cd refund-desk
 python -m venv .venv
 .venv/Scripts/activate            # Windows. On macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
