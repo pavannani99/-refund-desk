@@ -35,6 +35,8 @@ Add free keys to `.env` for the real thing:
 | `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET` | [PayPal Developer → Apps & Credentials → Sandbox](https://developer.paypal.com/dashboard/applications/sandbox) | Free |
 | `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/apikey) | Free tier, no card |
 
+> **Use a US sandbox business account.** The sample orders are paid with PayPal's sandbox test card, and sandbox business accounts from some regions (for example India) can't take card payments. In the PayPal Developer Dashboard go to **Testing Tools → Sandbox Accounts → Create account**, choose **Business** and **United States**, then **Apps & Credentials → Create App** (Merchant) linked to that account, and use its keys. If a payment can't be created, that order falls back to demo mode and the app keeps working.
+
 With PayPal keys, the seed step creates and captures a real sandbox payment for every sample order, using PayPal's test card. Approving a refund in the grid then refunds that capture, and you can see it in your sandbox business account.
 
 Tests: `pip install pytest && pytest`
