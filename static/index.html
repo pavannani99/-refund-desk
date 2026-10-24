@@ -53,6 +53,7 @@
     </div>
     <span class="spacer"></span>
     <button id="btnNew" class="ghost">+ New message</button>
+    <button id="btnImport" class="ghost">Import CSV</button>
     <button id="btnRerun" class="ghost">Re-run AI</button>
     <button id="btnCsv" class="ghost">Export CSV</button>
     <button id="btnReset" class="ghost">Reset demo</button>
@@ -95,6 +96,18 @@
     <label>Subject <input id="newSubject" required maxlength="200" value="Problem with my order"></label>
     <label>Message <textarea id="newMessage" rows="5" required maxlength="4000">The left earbud crackles at any volume. Can you help?</textarea></label>
     <div class="row"><button value="cancel" class="ghost">Cancel</button><button value="ok" class="primary">Send to the AI</button></div>
+  </form>
+</dialog>
+
+<dialog id="importDialog">
+  <form method="dialog" id="importForm">
+    <h2>Import refund requests</h2>
+    <p class="muted">Each row becomes a case the AI analyzes. New orders get a PayPal sandbox payment, so approved refunds are real sandbox refunds. Up to 25 rows at a time.</p>
+    <p class="muted"><b>Required columns:</b> buyer_name, item, amount, subject, message.<br>
+      <b>Optional:</b> order_id, buyer_email, order_date, delivery_status (delivered, in_transit, lost), delivered_date, channel (email or paypal_dispute).</p>
+    <p><a href="/static/sample-import.csv" download>Download a sample CSV</a></p>
+    <label>CSV file <input type="file" id="importFile" accept=".csv,text/csv" required></label>
+    <div class="row"><button value="cancel" class="ghost" formnovalidate>Cancel</button><button value="ok" class="primary">Import</button></div>
   </form>
 </dialog>
 

@@ -56,7 +56,7 @@ function saveState(state) {
 const columnDefs = [
   { field: "id", headerName: "#", width: 70, pinned: "left", filter: "agNumberColumnFilter" },
   { field: "status", width: 125, pinned: "left",
-    cellRenderer: (p) => pill(p.value === "analyzing" || p.value === "queued" ? "AI working…" : p.value.replace("_", " "), STATUS_CLASS[p.value] || "p-muted") },
+    cellRenderer: (p) => pill(p.value === "analyzing" || p.value === "queued" ? "AI working…" : p.value === "new" ? "waiting for AI" : p.value.replace("_", " "), STATUS_CLASS[p.value] || "p-muted") },
   { colId: "waiting", headerName: "Waiting", width: 105, filter: "agNumberColumnFilter",
     headerTooltip: "Time since the buyer wrote (until a decision). Green under 24h, amber under 48h, red after.",
     valueGetter: (p) => (p.data && p.data.id ? hoursWaiting(p.data) : null),
@@ -103,7 +103,7 @@ const grid = agGrid.createGrid($("#grid"), {
   initialState: readState(),
   onStateUpdated: (e) => saveState(e.state),
   rowSelection: { mode: "multiRow", checkboxes: true, headerCheckbox: true, enableClickSelection: false,
-    isRowSelectable: (n) => ["proposed", "needs_human", "error"].includes(n.data.status) },
+    isRowSelectable: (n) => ["proposed", "needs_human", "error", "new"].includes(n.data.status) },
   selectionColumnDef: { pinned: "left", width: 50 },
   undoRedoCellEditing: true,
   undoRedoCellEditingLimit: 20,
@@ -431,6 +431,25 @@ function applyTheme() {
 }
 applyTheme();
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { applyTheme(); refreshSummary(); });
+
+$("#btnImport").onclick = () => { $("#importForm").reset(); $("#importDialog").showModal(); };
+$("#importForm").onsubmit = async (e) => {
+  if (e.submitter?.value !== "ok") return;
+  const file = $("#importFile").files[0];
+  if (!file) return;
+  if (file.size > 200000) return toast("That file is too big. Import up to 25 rows at a time.");
+  try {
+    const res = await api("/api/import", { method: "POST", body: JSON.stringify({ csv: await file.text() }) });
+    const skipped = res.errors.length ? `, ${res.errors.length} skipped (row ${res.errors[0].row}: ${res.errors[0].error})` : "";
+    const waiting = res.waiting_for_ai ? `. ${res.waiting_for_ai} wait for the AI (hourly demo limit): select them and click Re-run AI later` : "";
+    toast(`Imported ${res.imported} case(s)${skipped}${waiting}.`);
+    if (view === "done") document.querySelector('#views button[data-view="todo"]').click();
+  } catch (err) {
+    toast(`Import failed: ${err.message}`);
+  }
+  load();
+  loadStatus();
+};
 
 grid.setGridOption("loading", true);
 loadStatus().then(load).then(() => {

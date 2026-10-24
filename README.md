@@ -46,6 +46,7 @@ flowchart LR
 4. Double-click **Reply** and type "We will refund you $10". It's refused, because a reply can't promise money before approval.
 5. Tick a few cases, click **Approve**, read the confirmation (total, high-risk warnings), and approve. The refunds go to PayPal, and the KPIs and charts update.
 6. Click **+ New message** and write your own complaint. The live AI analyzes it in a few seconds.
+7. Click **Import CSV** and load [`static/sample-import.csv`](static/sample-import.csv), or your own file (up to 25 rows). Each row gets a PayPal sandbox payment and is analyzed by the AI.
 
 ## Run it
 
@@ -84,6 +85,7 @@ To re-record the saved AI run with your own key: `python -m app.snapshot`. Tests
 | AI agent | Gemini function calling (`get_payment`, `get_buyer_history`, `propose_resolution`) in a loop of up to 6 turns. Rejected proposals go back with reasons. Reviewer corrections are added to the prompt. Daily-quota model fallback and retries. | `app/agent.py` |
 | Guard rails | Refund limits, no-promise reply check, risk rating, confirmation written only after the refund. | `app/policy.py` |
 | Review desk | AG Grid Community and AG Charts Community (see below). | `static/app.js` |
+| CSV import | `POST /api/import`: validates each row, creates the order with a sandbox payment, and queues the case for the AI. Bad rows are skipped and reported. | `app/main.py`, `app/seed.py` |
 | API | FastAPI with SQLite. One worker queue keeps the AI inside free-tier rate limits. The public demo caps live AI use per hour, and a stale analysis can't overwrite data after a reset. | `app/main.py` |
 | Saved AI run | Real Gemini proposals for the samples, so the hosted demo starts instantly and never burns the free quota. | `app/snapshot.py` |
 

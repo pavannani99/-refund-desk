@@ -169,3 +169,43 @@ def test_a_reply_in_another_language_than_the_buyer_wrote_is_refused():
     es = "Hola Sofía, lamento mucho las molestias. Nuestro equipo está revisando su solicitud y le responderá pronto."
     assert policy.check_proposal(proposal(reply=es, amount=39.99), {"amount": 39.99}, 0, es_msg)[0] == []
     assert policy.check_proposal(proposal(amount=39.99), {"amount": 39.99}, 0, "Help!!")[0] == []
+
+
+CSV_HEAD = "buyer_name,item,amount,subject,message,order_id,channel\n"
+
+
+def test_csv_import_creates_cases_and_skips_bad_rows(monkeypatch):
+    queued = []
+    monkeypatch.setattr(main, "_enqueue", queued.append)
+    body = CSV_HEAD + ('Ann,Earbuds,79.00,Silent earbud,"The left one is silent, help.",,email\n'
+                       "Bo,Stand,abc,Late,Never came,,\n"
+                       "Cy,Headset,45,Broken,Cable broke,ORD-X1,paypal_dispute\n")
+    with TestClient(app) as client:
+        before = len(client.get("/api/cases").json())
+        res = client.post("/api/import", json={"csv": body}).json()
+        assert res["imported"] == 2 and res["errors"] == [{"row": 3, "error": "amount 'abc' is not a number"}]
+        assert len(client.get("/api/cases").json()) == before + 2 and len(queued) == 2
+    assert db.one("SELECT channel FROM cases WHERE order_id = 'ORD-X1'")["channel"] == "paypal_dispute"
+
+
+def test_csv_import_reuses_an_existing_order(monkeypatch):
+    monkeypatch.setattr(main, "_enqueue", lambda case_id: None)
+    with TestClient(app) as client:
+        client.post("/api/import", json={"csv": CSV_HEAD + "Ann,Earbuds,79,Again,Still silent,ORD-1001,email\n"})
+    assert db.one("SELECT COUNT(*) AS n FROM orders WHERE id = 'ORD-1001'")["n"] == 1
+    assert db.one("SELECT COUNT(*) AS n FROM cases WHERE order_id = 'ORD-1001'")["n"] == 2
+
+
+def test_csv_import_rejects_missing_columns_and_too_many_rows():
+    with TestClient(app) as client:
+        assert client.post("/api/import", json={"csv": "buyer_name,item\nAnn,Earbuds\n"}).status_code == 422
+        big = CSV_HEAD + "Ann,Earbuds,10,Hi,Hello,,\n" * 26
+        assert client.post("/api/import", json={"csv": big}).status_code == 413
+
+
+def test_the_sample_csv_imports_cleanly(monkeypatch):
+    monkeypatch.setattr(main, "_enqueue", lambda case_id: None)
+    sample = (main.STATIC / "sample-import.csv").read_text(encoding="utf-8")
+    with TestClient(app) as client:
+        res = client.post("/api/import", json={"csv": sample}).json()
+    assert res == {"imported": 3, "errors": [], "waiting_for_ai": 0}

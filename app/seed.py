@@ -60,22 +60,36 @@ SAMPLES = [
 HOURS_AGO = [3, 52, 20, 30, 6, 12, 2, 49, 26, 8, 72, 40]
 
 
+def add_order(oid, name, email, item, amount, order_date, delivery, delivered_date, try_paypal=True) -> tuple[str, str | None]:
+    """Insert an order with a sandbox payment behind it. Returns (mode, PayPal error if the payment failed)."""
+    capture_id, mode, error = f"DEMO-CAP-{oid}", "demo", None
+    if try_paypal:
+        try:
+            capture_id, mode = paypal.create_captured_payment(oid, item, amount, name)
+        except paypal.PayPalError as e:
+            error = f"{oid}: {e}"
+    db.execute("INSERT INTO orders VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+               (oid, name, email, item, amount, "USD", order_date, delivery, delivered_date, capture_id, mode))
+    return mode, error
+
+
+def add_case(oid, channel, subject, message, received_at=None) -> int:
+    return db.execute("INSERT INTO cases (order_id, channel, subject, message, received_at, updated_at) "
+                      "VALUES (?,?,?,?,?,?)", (oid, channel, subject, message, received_at or db.now(), db.now()))
+
+
 def seed() -> dict:
     db.reset()
     modes = {"sandbox": 0, "demo": 0}
     errors = []
     for i, (oid, name, email, item, amount, ordered, delivery, delivered, channel, subject, message) in enumerate(SAMPLES):
-        capture_id, mode = f"DEMO-CAP-{oid}", "demo"
-        if not errors:  # one failure (e.g. the account can't take card payments) means the rest would fail too
-            try:
-                capture_id, mode = paypal.create_captured_payment(oid, item, amount, name)
-            except paypal.PayPalError as e:
-                errors.append(f"{oid}: {e}")
+        # one failure (e.g. the account can't take card payments) means the rest would fail too
+        mode, error = add_order(oid, name, email, item, amount, _d(ordered), delivery, _d(delivered),
+                                try_paypal=not errors)
+        if error:
+            errors.append(error)
         modes[mode] += 1
         received = (datetime.now(timezone.utc) - timedelta(hours=HOURS_AGO[i % len(HOURS_AGO)])).isoformat(
             timespec="seconds")
-        db.execute("INSERT INTO orders VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-                   (oid, name, email, item, amount, "USD", _d(ordered), delivery, _d(delivered), capture_id, mode))
-        db.execute("INSERT INTO cases (order_id, channel, subject, message, received_at, updated_at) "
-                   "VALUES (?,?,?,?,?,?)", (oid, channel, subject, message, received, db.now()))
+        add_case(oid, channel, subject, message, received)
     return {"cases": len(SAMPLES), "payments": modes, "errors": errors[:3]}

@@ -1,0 +1,4 @@
+buyer_name,buyer_email,item,amount,order_date,delivery_status,delivered_date,channel,subject,message
+Liam Carter,liam.c@example.com,Wireless Earbuds,79.00,2026-10-10,delivered,2026-10-15,email,Left earbud is silent,"The left earbud makes no sound at all, even after resetting and charging it. The right one works fine."
+Ava Nguyen,ava.n@example.com,Desk Mic Stand,24.50,2026-09-28,in_transit,,paypal_dispute,Item not received,"It has been almost a month and tracking hasn't updated in two weeks. Please help."
+Mateo Ruiz,mateo.r@example.com,USB Headset,45.00,2026-10-12,delivered,2026-10-18,email,Llegó con el cable roto,"Hola, el auricular llegó con el cable roto y no funciona. ¿Me pueden ayudar? Gracias."

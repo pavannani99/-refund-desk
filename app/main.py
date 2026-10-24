@@ -1,5 +1,8 @@
+import csv
+import io
 import json
 import queue
+import uuid
 import threading
 import time
 from collections import deque
@@ -237,6 +240,60 @@ def new_case(body: NewCase):
                          (body.order_id, "email", body.subject[:200], body.message[:4000], db.now(), db.now()))
     _enqueue(case_id)
     return {"id": case_id}
+
+
+class CsvImport(BaseModel):
+    csv: str
+
+
+IMPORT_MAX_ROWS = 25
+IMPORT_REQUIRED = ("buyer_name", "item", "amount", "subject", "message")
+
+
+@app.post("/api/import")
+def import_csv(body: CsvImport):
+    """Bulk-load refund requests. Each row becomes a case for the AI; new orders get a sandbox payment."""
+    reader = csv.DictReader(io.StringIO(body.csv.lstrip("﻿")))
+    missing = [c for c in IMPORT_REQUIRED if c not in (reader.fieldnames or [])]
+    if missing:
+        raise HTTPException(422, f"the CSV is missing column(s): {', '.join(missing)}")
+    rows = list(reader)
+    if not rows:
+        raise HTTPException(422, "the CSV has no rows")
+    if len(rows) > IMPORT_MAX_ROWS:
+        raise HTTPException(413, f"import up to {IMPORT_MAX_ROWS} rows at a time")
+
+    imported, errors, waiting = 0, [], 0
+    for n, raw in enumerate(rows, start=2):  # row 1 is the header
+        row = {k: (v or "").strip() for k, v in raw.items() if k}
+        try:
+            if any(not row.get(c) for c in IMPORT_REQUIRED):
+                raise ValueError("buyer_name, item, amount, subject and message are all required")
+            try:
+                amount = round(float(row["amount"].replace("$", "").replace(",", "")), 2)
+            except ValueError:
+                raise ValueError(f"amount '{row['amount']}' is not a number") from None
+            if not 0 < amount <= config.HARD_CEILING_USD:
+                raise ValueError(f"amount must be between 0.01 and {config.HARD_CEILING_USD:.0f}")
+            channel = row.get("channel") or "email"
+            if channel not in ("email", "paypal_dispute"):
+                raise ValueError("channel must be email or paypal_dispute")
+            delivery = row.get("delivery_status") or "delivered"
+            oid = (row.get("order_id") or f"IMP-{uuid.uuid4().hex[:6].upper()}")[:40]
+            if not db.one("SELECT id FROM orders WHERE id = ?", (oid,)):
+                seed.add_order(oid, row["buyer_name"][:100], row.get("buyer_email", "")[:200], row["item"][:200],
+                               amount, row.get("order_date") or None, delivery, row.get("delivered_date") or None)
+            case_id = seed.add_case(oid, channel, row["subject"][:200], row["message"][:4000])
+        except ValueError as e:
+            errors.append({"row": n, "error": str(e)})
+            continue
+        imported += 1
+        try:
+            _take_live_ai_slot()
+            _enqueue(case_id)
+        except HTTPException:
+            waiting += 1  # over the hourly AI cap: stays 'new' until someone clicks Re-run AI
+    return {"imported": imported, "errors": errors, "waiting_for_ai": waiting}
 
 
 @app.get("/api/orders")

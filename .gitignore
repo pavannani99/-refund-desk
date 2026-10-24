@@ -4,3 +4,5 @@ __pycache__/
 *.db
 pip.log
 .pytest_cache/
+docs/demo-script.md
+docs/devpost.md
