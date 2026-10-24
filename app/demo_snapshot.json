@@ -1,0 +1,696 @@
+[
+ {
+  "order_id": "ORD-1001",
+  "intent": "damaged",
+  "sentiment": "calm",
+  "confidence": 0.9,
+  "action": "refund_full",
+  "amount": 59.99,
+  "reasoning": "The buyer reports that one of the microphones is dead on arrival (won't turn on). Per store policy, items that are dead on arrival qualify for a full refund without requiring a return.",
+  "reply": "Hi Maya, I am so sorry to hear that one of your microphones isn't working as expected. I have shared these details with our team for review, and we will follow up with you shortly regarding the next steps. Thank you for your patience.",
+  "risk": "low",
+  "agent": "gemini:gemini-3.1-flash-lite",
+  "trace": [
+   {
+    "tool": "get_payment",
+    "result": {
+     "order_id": "ORD-1001",
+     "item": "Wireless Lavalier Mic (2-pack)",
+     "order_amount_usd": 59.99,
+     "order_date": "2026-10-15",
+     "delivery_status": "delivered",
+     "delivered_date": "2026-10-20",
+     "days_since_delivery": 4,
+     "days_since_order": 9,
+     "already_refunded_usd": 0,
+     "refundable_usd": 59.99,
+     "paypal_capture": {
+      "id": "DEMO-CAP-ORD-1001",
+      "status": "COMPLETED",
+      "source": "demo"
+     }
+    }
+   },
+   {
+    "tool": "get_buyer_history",
+    "result": {
+     "earlier_cases": [
+      {
+       "id": 11,
+       "subject": "Another issue",
+       "status": "new",
+       "action": null,
+       "amount": null
+      }
+     ],
+     "count": 1
+    }
+   },
+   {
+    "tool": "propose_resolution",
+    "args": {
+     "reply": "Hi Maya, I am so sorry to hear that one of your microphones isn't working as expected. I have shared these details with our team for review, and we will follow up with you shortly regarding the next steps. Thank you for your patience.",
+     "action": "refund_full",
+     "intent": "damaged",
+     "sentiment": "calm",
+     "reasoning": "The buyer reports that one of the microphones is dead on arrival (won't turn on). Per store policy, items that are dead on arrival qualify for a full refund without requiring a return.",
+     "confidence": 0.9,
+     "amount": 59.99
+    },
+    "errors": []
+   }
+  ]
+ },
+ {
+  "order_id": "ORD-1002",
+  "intent": "not_received",
+  "sentiment": "frustrated",
+  "confidence": 1.0,
+  "action": "refund_full",
+  "amount": 149.0,
+  "reasoning": "The tracking has shown no movement for 16 days, which exceeds the 10-day threshold for a full refund per store policy.",
+  "reply": "I am very sorry to hear that your order has not arrived yet. I understand how frustrating this is. Our team is currently reviewing your request and the shipping status, and we will follow up with you shortly regarding the next steps. Thank you for your patience.",
+  "risk": "high",
+  "agent": "gemini:gemini-3.1-flash-lite",
+  "trace": [
+   {
+    "tool": "get_payment",
+    "result": {
+     "order_id": "ORD-1002",
+     "item": "Podcast Starter Kit",
+     "order_amount_usd": 149.0,
+     "order_date": "2026-09-30",
+     "delivery_status": "in_transit",
+     "delivered_date": null,
+     "days_since_delivery": null,
+     "days_since_order": 24,
+     "already_refunded_usd": 0,
+     "refundable_usd": 149.0,
+     "paypal_capture": {
+      "id": "DEMO-CAP-ORD-1002",
+      "status": "COMPLETED",
+      "source": "demo"
+     }
+    }
+   },
+   {
+    "tool": "get_buyer_history",
+    "result": {
+     "earlier_cases": [],
+     "count": 0
+    }
+   },
+   {
+    "tool": "propose_resolution",
+    "args": {
+     "amount": 149,
+     "reasoning": "The tracking has shown no movement for 16 days, which exceeds the 10-day threshold for a full refund per store policy.",
+     "intent": "not_received",
+     "reply": "I am very sorry to hear that your order has not arrived yet. I understand how frustrating this is. Our team is currently reviewing your request and the shipping status, and we will follow up with you shortly regarding the next steps. Thank you for your patience.",
+     "sentiment": "frustrated",
+     "confidence": 1,
+     "action": "refund_full"
+    },
+    "errors": []
+   }
+  ]
+ },
+ {
+  "order_id": "ORD-1003",
+  "intent": "damaged",
+  "sentiment": "calm",
+  "confidence": 0.9,
+  "action": "refund_partial",
+  "amount": 10.0,
+  "reasoning": "The item is functional but has cosmetic damage, so per policy, a partial refund of 15-30% is appropriate.",
+  "reply": "Thank you for reaching out, and I am very sorry to hear that the charging case arrived with a scratch. I understand how disappointing that is, especially for a gift. Our team is currently reviewing your request, and we will follow up with you shortly regarding the next steps.",
+  "risk": "low",
+  "agent": "gemini:gemini-3.1-flash-lite",
+  "trace": [
+   {
+    "tool": "get_payment",
+    "result": {
+     "order_id": "ORD-1003",
+     "item": "Clip-on Mic - Black",
+     "order_amount_usd": 49.99,
+     "order_date": "2026-10-12",
+     "delivery_status": "delivered",
+     "delivered_date": "2026-10-17",
+     "days_since_delivery": 7,
+     "days_since_order": 12,
+     "already_refunded_usd": 0,
+     "refundable_usd": 49.99,
+     "paypal_capture": {
+      "id": "DEMO-CAP-ORD-1003",
+      "status": "COMPLETED",
+      "source": "demo"
+     }
+    }
+   },
+   {
+    "tool": "get_buyer_history",
+    "result": {
+     "earlier_cases": [],
+     "count": 0
+    }
+   },
+   {
+    "tool": "propose_resolution",
+    "args": {
+     "action": "refund_partial",
+     "sentiment": "calm",
+     "intent": "damaged",
+     "amount": 10,
+     "reasoning": "The item is functional but has cosmetic damage, so per policy, a partial refund of 15-30% is appropriate.",
+     "confidence": 0.9,
+     "reply": "Thank you for reaching out, and I am very sorry to hear that the charging case arrived with a scratch. I understand how disappointing that is, especially for a gift. Our team is currently reviewing your request, and we will follow up with you shortly regarding the next steps."
+    },
+    "errors": []
+   }
+  ]
+ },
+ {
+  "order_id": "ORD-1004",
+  "intent": "changed_mind",
+  "sentiment": "calm",
+  "confidence": 1.0,
+  "action": "reject",
+  "amount": 0.0,
+  "reasoning": "The buyer changed their mind, but the request was made 50 days after delivery, which exceeds the 30-day return policy.",
+  "reply": "Hi Lucas, thank you for reaching out. Our return policy allows for returns within 30 days of delivery. Since this order was delivered more than 30 days ago, we are unable to accept a return or offer a refund. Our team has reviewed your request and we appreciate your understanding.",
+  "risk": "low",
+  "agent": "gemini:gemini-3.1-flash-lite",
+  "trace": [
+   {
+    "tool": "get_payment",
+    "result": {
+     "order_id": "ORD-1004",
+     "item": "USB Audio Interface",
+     "order_amount_usd": 89.0,
+     "order_date": "2026-08-30",
+     "delivery_status": "delivered",
+     "delivered_date": "2026-09-04",
+     "days_since_delivery": 50,
+     "days_since_order": 55,
+     "already_refunded_usd": 0,
+     "refundable_usd": 89.0,
+     "paypal_capture": {
+      "id": "DEMO-CAP-ORD-1004",
+      "status": "COMPLETED",
+      "source": "demo"
+     }
+    }
+   },
+   {
+    "tool": "get_buyer_history",
+    "result": {
+     "earlier_cases": [],
+     "count": 0
+    }
+   },
+   {
+    "tool": "propose_resolution",
+    "args": {
+     "sentiment": "calm",
+     "confidence": 1,
+     "amount": 0,
+     "intent": "changed_mind",
+     "action": "reject",
+     "reply": "Hi Lucas, thank you for reaching out. Our return policy allows for returns within 30 days of delivery. Since this order was delivered more than 30 days ago, we are unable to accept a return or offer a refund. Our team has reviewed your request and we appreciate your understanding.",
+     "reasoning": "The buyer changed their mind, but the request was made 50 days after delivery, which exceeds the 30-day return policy."
+    },
+    "errors": []
+   }
+  ]
+ },
+ {
+  "order_id": "ORD-1005",
+  "intent": "damaged",
+  "sentiment": "calm",
+  "confidence": 0.9,
+  "action": "refund_full",
+  "amount": 39.99,
+  "reasoning": "The microphone is reported as not working (dead on arrival), which qualifies for a full refund under the store policy. No return or photo is required.",
+  "reply": "Hola Sofia, lamento mucho escuchar que tu micrófono no funciona correctamente. Entiendo lo frustrante que es esto. Nuestro equipo ya está revisando tu solicitud y nos pondremos en contacto contigo pronto para darte una solución. Gracias por tu paciencia.",
+  "risk": "low",
+  "agent": "gemini:gemini-3.1-flash-lite",
+  "trace": [
+   {
+    "tool": "get_payment",
+    "result": {
+     "order_id": "ORD-1005",
+     "item": "Clip-on Mic - White",
+     "order_amount_usd": 39.99,
+     "order_date": "2026-10-14",
+     "delivery_status": "delivered",
+     "delivered_date": "2026-10-19",
+     "days_since_delivery": 5,
+     "days_since_order": 10,
+     "already_refunded_usd": 0,
+     "refundable_usd": 39.99,
+     "paypal_capture": {
+      "id": "DEMO-CAP-ORD-1005",
+      "status": "COMPLETED",
+      "source": "demo"
+     }
+    }
+   },
+   {
+    "tool": "get_buyer_history",
+    "result": {
+     "earlier_cases": [],
+     "count": 0
+    }
+   },
+   {
+    "tool": "propose_resolution",
+    "args": {
+     "action": "refund_full",
+     "confidence": 0.9,
+     "reply": "Hola Sofia, lamento mucho escuchar que tu micrófono no funciona correctamente. Entiendo lo frustrante que es esto. Nuestro equipo ya está revisando tu solicitud y nos pondremos en contacto contigo pronto para darte una solución. Gracias por tu paciencia.",
+     "sentiment": "calm",
+     "amount": 39.99,
+     "reasoning": "The microphone is reported as not working (dead on arrival), which qualifies for a full refund under the store policy. No return or photo is required.",
+     "intent": "damaged"
+    },
+    "errors": []
+   }
+  ]
+ },
+ {
+  "order_id": "ORD-1006",
+  "intent": "missing_part",
+  "sentiment": "calm",
+  "confidence": 0.95,
+  "action": "refund_partial",
+  "amount": 7.0,
+  "reasoning": "The buyer is missing an accessory but the main product works. Per policy, I am offering a partial refund (approx 20%) for missing accessories.",
+  "reply": "Hi Ethan, I am sorry to hear that the pop filter was missing from your order. Our team is currently reviewing your request and will follow up with you shortly regarding the next steps. Thank you for your patience.",
+  "risk": "low",
+  "agent": "gemini:gemini-3.1-flash-lite",
+  "trace": [
+   {
+    "tool": "get_payment",
+    "result": {
+     "order_id": "ORD-1006",
+     "item": "Boom Arm + Pop Filter",
+     "order_amount_usd": 34.5,
+     "order_date": "2026-10-16",
+     "delivery_status": "delivered",
+     "delivered_date": "2026-10-21",
+     "days_since_delivery": 3,
+     "days_since_order": 8,
+     "already_refunded_usd": 0,
+     "refundable_usd": 34.5,
+     "paypal_capture": {
+      "id": "DEMO-CAP-ORD-1006",
+      "status": "COMPLETED",
+      "source": "demo"
+     }
+    }
+   },
+   {
+    "tool": "get_buyer_history",
+    "result": {
+     "earlier_cases": [],
+     "count": 0
+    }
+   },
+   {
+    "tool": "propose_resolution",
+    "args": {
+     "intent": "missing_part",
+     "reasoning": "The buyer is missing an accessory but the main product works. Per policy, I am offering a partial refund for missing accessories.",
+     "confidence": 0.95,
+     "reply": "Hi Ethan, I am sorry to hear that the pop filter was missing from your order. Our team is currently reviewing your request and will follow up with you shortly regarding the next steps. Thank you for your patience.",
+     "action": "refund_partial",
+     "sentiment": "calm",
+     "amount": 0
+    },
+    "errors": [
+     "a refund needs a positive amount"
+    ]
+   },
+   {
+    "tool": "propose_resolution",
+    "args": {
+     "action": "refund_partial",
+     "reasoning": "The buyer is missing an accessory but the main product works. Per policy, I am offering a partial refund (approx 20%) for missing accessories.",
+     "amount": 7,
+     "intent": "missing_part",
+     "sentiment": "calm",
+     "reply": "Hi Ethan, I am sorry to hear that the pop filter was missing from your order. Our team is currently reviewing your request and will follow up with you shortly regarding the next steps. Thank you for your patience.",
+     "confidence": 0.95
+    },
+    "errors": []
+   }
+  ]
+ },
+ {
+  "order_id": "ORD-1007",
+  "intent": "not_as_described",
+  "sentiment": "frustrated",
+  "confidence": 0.9,
+  "action": "refund_partial",
+  "amount": 25.8,
+  "reasoning": "The buyer reported cosmetic damage (a dent) and a color discrepancy while the product is still functional. Per policy, I am proposing a partial refund of 20% for cosmetic issues.",
+  "reply": "I am very sorry to hear that the headphones arrived with a dent and that the color was not what you expected. I understand how disappointing this is. Our team is currently reviewing your request, and we will follow up with you shortly regarding the next steps. Thank you for your patience.",
+  "risk": "low",
+  "agent": "gemini:gemini-3.1-flash-lite",
+  "trace": [
+   {
+    "tool": "get_payment",
+    "result": {
+     "order_id": "ORD-1007",
+     "item": "Studio Headphones",
+     "order_amount_usd": 129.0,
+     "order_date": "2026-10-18",
+     "delivery_status": "delivered",
+     "delivered_date": "2026-10-22",
+     "days_since_delivery": 2,
+     "days_since_order": 6,
+     "already_refunded_usd": 0,
+     "refundable_usd": 129.0,
+     "paypal_capture": {
+      "id": "DEMO-CAP-ORD-1007",
+      "status": "COMPLETED",
+      "source": "demo"
+     }
+    }
+   },
+   {
+    "tool": "get_buyer_history",
+    "result": {
+     "earlier_cases": [],
+     "count": 0
+    }
+   },
+   {
+    "tool": "propose_resolution",
+    "args": {
+     "action": "refund_partial",
+     "reply": "I am very sorry to hear that the headphones arrived with a dent and that the color was not what you expected. I understand how disappointing this is. Our team is currently reviewing your request, and we will follow up with you shortly regarding the next steps. Thank you for your patience.",
+     "sentiment": "frustrated",
+     "amount": 25.8,
+     "reasoning": "The buyer reported cosmetic damage (a dent) and a color discrepancy while the product is still functional. Per policy, I am proposing a partial refund of 20% for cosmetic issues.",
+     "intent": "not_as_described",
+     "confidence": 0.9
+    },
+    "errors": []
+   }
+  ]
+ },
+ {
+  "order_id": "ORD-1008",
+  "intent": "unclear",
+  "sentiment": "calm",
+  "confidence": 1.0,
+  "action": "ask_info",
+  "amount": 0.0,
+  "reasoning": "The buyer's message is vague and does not specify the issue with the order, so I need to ask for clarification before applying the policy.",
+  "reply": "Hi Omar, thank you for reaching out. I'm sorry to hear that something is off with your order. Could you please provide a few more details about the issue you're experiencing? Our team is reviewing your request and will follow up with you as soon as we have more information.",
+  "risk": "low",
+  "agent": "gemini:gemini-3.1-flash-lite",
+  "trace": [
+   {
+    "tool": "get_payment",
+    "result": {
+     "order_id": "ORD-1008",
+     "item": "Wireless Lavalier Mic (2-pack)",
+     "order_amount_usd": 59.99,
+     "order_date": "2026-10-09",
+     "delivery_status": "delivered",
+     "delivered_date": "2026-10-13",
+     "days_since_delivery": 11,
+     "days_since_order": 15,
+     "already_refunded_usd": 0,
+     "refundable_usd": 59.99,
+     "paypal_capture": {
+      "id": "DEMO-CAP-ORD-1008",
+      "status": "COMPLETED",
+      "source": "demo"
+     }
+    }
+   },
+   {
+    "tool": "get_buyer_history",
+    "result": {
+     "earlier_cases": [],
+     "count": 0
+    }
+   },
+   {
+    "tool": "propose_resolution",
+    "args": {
+     "confidence": 1,
+     "action": "ask_info",
+     "sentiment": "calm",
+     "reasoning": "The buyer's message is vague and does not specify the issue with the order, so I need to ask for clarification before applying the policy.",
+     "reply": "Hi Omar, thank you for reaching out. I'm sorry to hear that something is off with your order. Could you please provide a few more details about the issue you're experiencing? Our team is reviewing your request and will follow up with you as soon as we have more information.",
+     "amount": 0,
+     "intent": "unclear"
+    },
+    "errors": []
+   }
+  ]
+ },
+ {
+  "order_id": "ORD-1009",
+  "intent": "changed_mind",
+  "sentiment": "calm",
+  "confidence": 1.0,
+  "action": "refund_full",
+  "amount": 27.99,
+  "reasoning": "The buyer changed their mind and the order is within the 30-day return window. Per policy, returns are accepted for a full refund once the item is returned.",
+  "reply": "Hi Grace, thank you for reaching out. I understand you would like to return your order. Our team is currently reviewing your request and will follow up with you shortly regarding the next steps.",
+  "risk": "low",
+  "agent": "gemini:gemini-3.1-flash-lite",
+  "trace": [
+   {
+    "tool": "get_payment",
+    "result": {
+     "order_id": "ORD-1009",
+     "item": "Ring Light 12in",
+     "order_amount_usd": 27.99,
+     "order_date": "2026-10-04",
+     "delivery_status": "delivered",
+     "delivered_date": "2026-10-08",
+     "days_since_delivery": 16,
+     "days_since_order": 20,
+     "already_refunded_usd": 0,
+     "refundable_usd": 27.99,
+     "paypal_capture": {
+      "id": "DEMO-CAP-ORD-1009",
+      "status": "COMPLETED",
+      "source": "demo"
+     }
+    }
+   },
+   {
+    "tool": "get_buyer_history",
+    "result": {
+     "earlier_cases": [],
+     "count": 0
+    }
+   },
+   {
+    "tool": "propose_resolution",
+    "args": {
+     "amount": 27.99,
+     "reply": "Hi Grace, thank you for reaching out. I understand you would like to return your order. Our team is currently reviewing your request and will follow up with you shortly regarding the next steps.",
+     "intent": "changed_mind",
+     "confidence": 1,
+     "action": "refund_full",
+     "reasoning": "The buyer changed their mind and the order is within the 30-day return window. Per policy, returns are accepted for a full refund once the item is returned.",
+     "sentiment": "calm"
+    },
+    "errors": []
+   }
+  ]
+ },
+ {
+  "order_id": "ORD-1010",
+  "intent": "damaged",
+  "sentiment": "calm",
+  "confidence": 1.0,
+  "action": "refund_full",
+  "amount": 149.0,
+  "reasoning": "The item is dead on arrival (won't power on), which qualifies for a full refund under the store policy for broken items. No return or photo is required.",
+  "reply": "I am very sorry to hear that your mixer isn't powering on. I understand how frustrating that is. Our team is currently reviewing your request, and we will follow up with you shortly regarding the next steps. Thank you for your patience.",
+  "risk": "high",
+  "agent": "gemini:gemini-3.1-flash-lite",
+  "trace": [
+   {
+    "tool": "get_payment",
+    "result": {
+     "order_id": "ORD-1010",
+     "item": "Podcast Starter Kit",
+     "order_amount_usd": 149.0,
+     "order_date": "2026-10-10",
+     "delivery_status": "delivered",
+     "delivered_date": "2026-10-15",
+     "days_since_delivery": 9,
+     "days_since_order": 14,
+     "already_refunded_usd": 0,
+     "refundable_usd": 149.0,
+     "paypal_capture": {
+      "id": "DEMO-CAP-ORD-1010",
+      "status": "COMPLETED",
+      "source": "demo"
+     }
+    }
+   },
+   {
+    "tool": "get_buyer_history",
+    "result": {
+     "earlier_cases": [],
+     "count": 0
+    }
+   },
+   {
+    "tool": "propose_resolution",
+    "args": {
+     "action": "refund_full",
+     "amount": 149,
+     "reply": "I am very sorry to hear that your mixer isn't powering on. I understand how frustrating that is. Our team is currently reviewing your request, and we will follow up with you shortly regarding the next steps. Thank you for your patience.",
+     "confidence": 1,
+     "intent": "damaged",
+     "sentiment": "calm",
+     "reasoning": "The item is dead on arrival (won't power on), which qualifies for a full refund under the store policy for broken items. No return or photo is required."
+    },
+    "errors": []
+   }
+  ]
+ },
+ {
+  "order_id": "ORD-1011",
+  "intent": "not_as_described",
+  "sentiment": "calm",
+  "confidence": 0.9,
+  "action": "refund_partial",
+  "amount": 10.0,
+  "reasoning": "The item has cosmetic damage but is functional. Per policy, cosmetic issues qualify for a partial refund of 15-30%.",
+  "reply": "Hi Maya, thank you for reaching out to us about the scuff on your microphone. I am sorry to hear that it arrived in this condition. Our team is currently reviewing your request, and we will follow up with you shortly regarding the next steps.",
+  "risk": "low",
+  "agent": "gemini:gemini-3.1-flash-lite",
+  "trace": [
+   {
+    "tool": "get_payment",
+    "result": {
+     "order_id": "ORD-1011",
+     "item": "Clip-on Mic - Black",
+     "order_amount_usd": 49.99,
+     "order_date": "2026-09-14",
+     "delivery_status": "delivered",
+     "delivered_date": "2026-09-18",
+     "days_since_delivery": 36,
+     "days_since_order": 40,
+     "already_refunded_usd": 0,
+     "refundable_usd": 49.99,
+     "paypal_capture": {
+      "id": "DEMO-CAP-ORD-1011",
+      "status": "COMPLETED",
+      "source": "demo"
+     }
+    }
+   },
+   {
+    "tool": "get_buyer_history",
+    "result": {
+     "earlier_cases": [
+      {
+       "id": 1,
+       "subject": "Mic won't turn on",
+       "status": "proposed",
+       "action": "refund_full",
+       "amount": 59.99
+      }
+     ],
+     "count": 1
+    }
+   },
+   {
+    "tool": "propose_resolution",
+    "args": {
+     "sentiment": "calm",
+     "action": "refund_partial",
+     "reasoning": "The item has cosmetic damage but is functional. Per policy, cosmetic issues qualify for a partial refund of 15-30%.",
+     "amount": 10,
+     "intent": "not_as_described",
+     "reply": "Hi Maya, thank you for reaching out to us about the scuff on your microphone. I am sorry to hear that it arrived in this condition. Our team is currently reviewing your request, and we will follow up with you shortly regarding the next steps.",
+     "confidence": 0.9
+    },
+    "errors": []
+   }
+  ]
+ },
+ {
+  "order_id": "ORD-1012",
+  "intent": "not_received",
+  "sentiment": "calm",
+  "confidence": 1.0,
+  "action": "refund_full",
+  "amount": 39.99,
+  "reasoning": "The tracking status confirms the package is lost, which qualifies for a full refund under the store policy for non-delivered items.",
+  "reply": "Hello Chloe, I am very sorry to hear that you have not received your order. Our team is currently reviewing your request regarding the lost package, and we will follow up with you shortly. Thank you for your patience.",
+  "risk": "low",
+  "agent": "gemini:gemini-3.1-flash-lite",
+  "trace": [
+   {
+    "tool": "get_payment",
+    "result": {
+     "order_id": "ORD-1012",
+     "item": "Clip-on Mic - White",
+     "order_amount_usd": 39.99,
+     "order_date": "2026-09-24",
+     "delivery_status": "lost",
+     "delivered_date": null,
+     "days_since_delivery": null,
+     "days_since_order": 30,
+     "already_refunded_usd": 0,
+     "refundable_usd": 39.99,
+     "paypal_capture": {
+      "id": "DEMO-CAP-ORD-1012",
+      "status": "COMPLETED",
+      "source": "demo"
+     }
+    }
+   },
+   {
+    "tool": "get_buyer_history",
+    "result": {
+     "earlier_cases": [],
+     "count": 0
+    }
+   },
+   {
+    "tool": "propose_resolution",
+    "args": {
+     "confidence": 1,
+     "sentiment": "calm",
+     "intent": "not_received",
+     "amount": 39.99,
+     "reasoning": "The tracking status confirms the package is lost, which qualifies for a full refund under the store policy for non-delivered items.",
+     "reply": "Bonjour Chloe, je suis sincèrement désolé d'apprendre que vous n'avez pas reçu votre commande. Notre équipe examine actuellement votre demande concernant ce colis perdu et nous reviendrons vers vous très prochainement avec une solution. Merci de votre patience.",
+     "action": "refund_full"
+    },
+    "errors": [
+     "the reply is in French but the buyer wrote in English; reply in English"
+    ]
+   },
+   {
+    "tool": "propose_resolution",
+    "args": {
+     "amount": 39.99,
+     "reasoning": "The tracking status confirms the package is lost, which qualifies for a full refund under the store policy for non-delivered items.",
+     "intent": "not_received",
+     "confidence": 1,
+     "reply": "Hello Chloe, I am very sorry to hear that you have not received your order. Our team is currently reviewing your request regarding the lost package, and we will follow up with you shortly. Thank you for your patience.",
+     "sentiment": "calm",
+     "action": "refund_full"
+    },
+    "errors": []
+   }
+  ]
+ }
+]

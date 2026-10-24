@@ -1,6 +1,6 @@
 """Sample orders and buyer messages. Each order gets a real captured payment in the PayPal sandbox when
 credentials are set, so approving a refund in the grid moves sandbox money."""
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from . import db, paypal
 
@@ -56,19 +56,26 @@ SAMPLES = [
 ]
 
 
+# How long ago each sample message arrived, so the grid's "Waiting" column has a realistic spread.
+HOURS_AGO = [3, 52, 20, 30, 6, 12, 2, 49, 26, 8, 72, 40]
+
+
 def seed() -> dict:
     db.reset()
     modes = {"sandbox": 0, "demo": 0}
     errors = []
-    for (oid, name, email, item, amount, ordered, delivery, delivered, channel, subject, message) in SAMPLES:
-        try:
-            capture_id, mode = paypal.create_captured_payment(oid, item, amount, name)
-        except paypal.PayPalError as e:
-            errors.append(f"{oid}: {e}")
-            capture_id, mode = f"DEMO-CAP-{oid}", "demo"
+    for i, (oid, name, email, item, amount, ordered, delivery, delivered, channel, subject, message) in enumerate(SAMPLES):
+        capture_id, mode = f"DEMO-CAP-{oid}", "demo"
+        if not errors:  # one failure (e.g. the account can't take card payments) means the rest would fail too
+            try:
+                capture_id, mode = paypal.create_captured_payment(oid, item, amount, name)
+            except paypal.PayPalError as e:
+                errors.append(f"{oid}: {e}")
         modes[mode] += 1
+        received = (datetime.now(timezone.utc) - timedelta(hours=HOURS_AGO[i % len(HOURS_AGO)])).isoformat(
+            timespec="seconds")
         db.execute("INSERT INTO orders VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                    (oid, name, email, item, amount, "USD", _d(ordered), delivery, _d(delivered), capture_id, mode))
         db.execute("INSERT INTO cases (order_id, channel, subject, message, received_at, updated_at) "
-                   "VALUES (?,?,?,?,?,?)", (oid, channel, subject, message, db.now(), db.now()))
+                   "VALUES (?,?,?,?,?,?)", (oid, channel, subject, message, received, db.now()))
     return {"cases": len(SAMPLES), "payments": modes, "errors": errors[:3]}

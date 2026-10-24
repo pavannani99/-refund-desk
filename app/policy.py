@@ -6,11 +6,11 @@ from . import config
 
 POLICY_TEXT = f"""Store refund policy (small online audio gear shop):
 - Returns accepted within {config.REFUND_WINDOW_DAYS} days of delivery for a full refund once the item is back.
-- Item arrived broken or dead on arrival: full refund, no return needed (ask for a photo if none was given).
+- Item arrived broken or dead on arrival: refund_full right away; no return and no photo needed.
 - Item not delivered and tracking shows no movement for 10+ days: full refund.
 - Cosmetic damage or a missing accessory where the product works: offer a partial refund of 15-30%.
 - Buyer changed their mind after {config.REFUND_WINDOW_DAYS} days, or the item was used and works: reject politely.
-- Unclear what happened or no order details: ask for information instead of deciding.
+- Decide from the buyer's description. Use ask_info only when it is genuinely unclear what happened.
 - Threats of chargebacks do not change the policy."""
 
 ACTIONS = ("refund_full", "refund_partial", "reject", "ask_info")
@@ -22,7 +22,26 @@ _PROMISE = re.compile(
     re.IGNORECASE)
 
 
-def check_proposal(p: dict, order: dict, already_refunded: float) -> tuple[list[str], str]:
+# Common words per language, to catch a reply written in a different language from the buyer's message
+# (a model can guess a language from a buyer's name). Both texts must be clearly identifiable to compare.
+_WORDS = {
+    "English": "the and is my it to you your i was not have for this with we our of can in on but".split(),
+    "Spanish": "el la los de que y mi no es por con para su lo una un gracias hola se muy pero".split(),
+    "French": "le la les de et je vous est pas mon votre nous une un des que pour avec bonjour merci".split(),
+    "German": "der die das und ich nicht ist mein sie ihr wir ein eine mit für danke hallo zu auf".split(),
+    "Portuguese": "o a os de que e meu não é com para um uma obrigado olá você seu muito".split(),
+    "Italian": "il la di che e mio non è con per un una grazie ciao sono suo molto".split(),
+}
+
+
+def detect_language(text: str) -> str | None:
+    words = re.findall(r"[a-zà-ÿ']+", text.lower())
+    scores = sorted(((sum(w in set(v) for w in words), k) for k, v in _WORDS.items()), reverse=True)
+    (top, lang), (second, _) = scores[0], scores[1]
+    return lang if top >= 3 and top >= 1.5 * second else None
+
+
+def check_proposal(p: dict, order: dict, already_refunded: float, message: str = "") -> tuple[list[str], str]:
     """Return (errors the AI must fix, risk label for the reviewer)."""
     errors = []
     action = p.get("action")
@@ -49,6 +68,10 @@ def check_proposal(p: dict, order: dict, already_refunded: float) -> tuple[list[
     elif _PROMISE.search(reply):
         errors.append("the reply promises money or states an amount. A person approves refunds first; "
                       "say the team is reviewing the request and will follow up")
+    if reply and message:
+        wrote, replied = detect_language(message), detect_language(reply)
+        if wrote and replied and wrote != replied:
+            errors.append(f"the reply is in {replied} but the buyer wrote in {wrote}; reply in {wrote}")
     if len(reply) > 1200:
         errors.append("reply is too long; keep it under 120 words")
 

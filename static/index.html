@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Refund Desk</title>
+  <meta name="description" content="An AI refund agent for small PayPal sellers. The AI drafts every decision, a person approves, PayPal pays.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b5fff'/%3E%3Cpath d='M20 34a12 12 0 1 0 4-9' fill='none' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3Cpath d='M16 18v10h10' fill='none' stroke='white' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-grid.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-theme-quartz.css">
   <link rel="stylesheet" href="/static/style.css">
@@ -11,29 +13,43 @@
 <body>
 <header>
   <div class="brand">
-    <span class="logo">↺</span>
+    <span class="logo" aria-hidden="true">↺</span>
     <div>
       <h1>Refund Desk</h1>
-      <p>AI drafts every refund decision. A person approves. PayPal pays.</p>
+      <p>The AI drafts every refund decision. A person approves. PayPal pays.</p>
     </div>
   </div>
   <div class="modes" id="modes"></div>
 </header>
 
-<section class="kpis" id="kpis"></section>
+<section class="kpis" id="kpis" aria-label="Summary"></section>
 
 <section class="charts">
-  <div class="card"><h2>Requests by reason</h2><canvas id="chartIntent"></canvas></div>
-  <div class="card"><h2>Where the money went</h2><canvas id="chartMoney"></canvas></div>
+  <div class="card"><h2>Requests by reason</h2><div id="chartIntent" class="chart"></div></div>
+  <div class="card"><h2>Where the money went</h2><div id="chartMoney" class="chart"></div></div>
 </section>
+
+<details class="card rails" id="rails">
+  <summary><b>Guard rails</b> <span id="railsSummary"></span></summary>
+  <div class="rails-body">
+    <div>
+      <h3>Checked in code on every AI proposal and every edit</h3>
+      <ul id="railsList"></ul>
+    </div>
+    <div>
+      <h3>Store policy given to the AI</h3>
+      <pre id="policyText"></pre>
+    </div>
+  </div>
+</details>
 
 <section class="card gridcard">
   <div class="toolbar">
-    <input id="search" type="search" placeholder="Search buyer, item, message…">
-    <div class="segmented" id="views">
+    <input id="search" type="search" placeholder="Search buyer, item, message…" aria-label="Search cases">
+    <div class="segmented" id="views" role="tablist">
       <button data-view="todo" class="on">To review</button>
+      <button data-view="done">Decided</button>
       <button data-view="all">All</button>
-      <button data-view="done">Done</button>
     </div>
     <span class="spacer"></span>
     <button id="btnNew" class="ghost">+ New message</button>
@@ -43,29 +59,49 @@
     <button id="btnDecline" class="danger">Decline</button>
     <button id="btnApprove" class="primary">Approve selected</button>
   </div>
+  <div class="chips" id="chips" aria-label="Quick filters">
+    <button data-chip="none" class="on">Everything</button>
+    <button data-chip="high">High risk</button>
+    <button data-chip="dispute">PayPal disputes</button>
+    <button data-chip="lowconf">AI unsure (&lt; 60%)</button>
+    <button data-chip="edited">Edited by a person</button>
+  </div>
   <div id="grid" class="ag-theme-quartz"></div>
-  <p class="hint">Click a row to read the message, the AI's reasoning and its tool calls. Double-click <b>Action</b>, <b>Amount</b> or <b>Reply</b> to edit before approving.</p>
+  <p class="hint">Click a row for the buyer's message, the AI's reasoning and every tool call. Double-click <b>Action</b>, <b>Refund</b> or <b>Reply</b> to edit (the same guard rails apply); <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes an edit. Arrow keys move around the grid.</p>
 </section>
 
-<aside id="drawer" class="drawer" hidden>
+<footer>Sandbox only: refunds go through the PayPal <b>sandbox</b>, no real money moves. Sample buyers and orders are made up.</footer>
+
+<aside id="drawer" class="drawer" hidden aria-label="Case details">
   <button class="close" id="drawerClose" aria-label="Close">×</button>
   <div id="drawerBody"></div>
 </aside>
 
+<dialog id="confirmDialog">
+  <form method="dialog">
+    <h2 id="confirmTitle">Approve</h2>
+    <ul id="confirmList" class="confirm-list"></ul>
+    <p id="confirmWarn" class="warn" hidden></p>
+    <p class="muted">Refunds are sent to PayPal now. Replies are sent to the buyers.</p>
+    <div class="row"><button value="cancel" class="ghost">Cancel</button><button value="ok" class="primary" id="confirmOk">Approve</button></div>
+  </form>
+</dialog>
+
 <dialog id="newDialog">
   <form method="dialog" id="newForm">
     <h2>Simulate a buyer message</h2>
+    <p class="muted">The live AI reads it, looks up the order in PayPal and proposes a resolution.</p>
     <label>Order <select id="newOrder"></select></label>
-    <label>Subject <input id="newSubject" required value="Problem with my order"></label>
-    <label>Message <textarea id="newMessage" rows="5" required>The left earbud crackles at any volume. Can you help?</textarea></label>
+    <label>Subject <input id="newSubject" required maxlength="200" value="Problem with my order"></label>
+    <label>Message <textarea id="newMessage" rows="5" required maxlength="4000">The left earbud crackles at any volume. Can you help?</textarea></label>
     <div class="row"><button value="cancel" class="ghost">Cancel</button><button value="ok" class="primary">Send to the AI</button></div>
   </form>
 </dialog>
 
-<div id="toast" class="toast" hidden></div>
+<div id="toast" class="toast" role="status" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ag-charts-community@10.3.3/dist/umd/ag-charts-community.min.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

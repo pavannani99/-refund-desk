@@ -9,9 +9,13 @@ PAYPAL_CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET", "")
 PAYPAL_BASE = os.getenv("PAYPAL_BASE", "https://api-m.sandbox.paypal.com")
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+# Tried in order; when one model's free daily quota runs out the agent moves to the next.
+GEMINI_MODELS = [m.strip() for m in os.getenv(
+    "GEMINI_MODELS", "gemini-3.5-flash,gemini-3.8-flash,gemini-3.1-flash-lite").split(",") if m.strip()]
 # Free-tier friendly pause between Gemini calls, in seconds.
-GEMINI_PAUSE = float(os.getenv("GEMINI_PAUSE", "4"))
+GEMINI_PAUSE = float(os.getenv("GEMINI_PAUSE", "1.5"))
+# A public demo must not burn the free AI quota: new buyer messages analyzed live, per rolling hour.
+LIVE_AI_PER_HOUR = int(os.getenv("LIVE_AI_PER_HOUR", "10"))
 
 DB_PATH = os.getenv("DB_PATH", "refund_desk.db")
 

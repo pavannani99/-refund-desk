@@ -73,6 +73,16 @@ def get_capture(capture_id: str, mode: str) -> dict:
             "create_time": cap.get("create_time"), "source": "paypal_sandbox"}
 
 
+def get_refund(refund_id: str, mode: str) -> dict:
+    """Read the refund back from PayPal, so the reviewer sees PayPal's own record of it."""
+    if mode == "demo" or not config.paypal_live() or refund_id.startswith("DEMO-"):
+        return {"id": refund_id, "status": "COMPLETED", "source": "demo"}
+    ref = _call("GET", f"/v2/payments/refunds/{refund_id}")
+    return {"id": ref["id"], "status": ref["status"], "amount": ref["amount"]["value"],
+            "currency": ref["amount"]["currency_code"], "create_time": ref.get("create_time"),
+            "source": "paypal_sandbox"}
+
+
 def refund_capture(capture_id: str, mode: str, amount: float, case_id: int, note: str) -> dict:
     if mode == "demo" or not config.paypal_live():
         return {"id": f"DEMO-REF-{uuid.uuid4().hex[:10].upper()}", "status": "COMPLETED", "source": "demo"}

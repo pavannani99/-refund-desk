@@ -24,9 +24,19 @@ CREATE TABLE IF NOT EXISTS cases (
     intent TEXT, sentiment TEXT, confidence REAL,
     action TEXT, amount REAL, reasoning TEXT, reply TEXT,
     risk TEXT, agent TEXT, trace TEXT,
+    ai_action TEXT, ai_amount REAL, ai_reply TEXT,
+    learned_from INTEGER DEFAULT 0,
     refund_id TEXT, final_message TEXT, error TEXT,
     edited INTEGER DEFAULT 0,
+    decided_by TEXT, decided_at TEXT,
     updated_at TEXT
+);
+CREATE TABLE IF NOT EXISTS corrections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    case_id INTEGER, intent TEXT, subject TEXT,
+    ai_action TEXT, ai_amount REAL, ai_reply TEXT,
+    action TEXT, amount REAL, reply TEXT, order_amount REAL,
+    created_at TEXT
 );
 """
 
@@ -48,7 +58,8 @@ def conn() -> sqlite3.Connection:
 def reset():
     with _lock:
         c = conn()
-        c.executescript("DROP TABLE IF EXISTS cases; DROP TABLE IF EXISTS orders;" + SCHEMA)
+        c.executescript("DROP TABLE IF EXISTS cases; DROP TABLE IF EXISTS orders; DROP TABLE IF EXISTS corrections;"
+                        + SCHEMA)
         c.commit()
 
 

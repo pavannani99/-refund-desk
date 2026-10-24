@@ -1,15 +1,32 @@
+import json
 import os
 
 os.environ["DB_PATH"] = ":memory:"
 os.environ["PAYPAL_CLIENT_ID"] = ""
 os.environ["GEMINI_API_KEY"] = ""
 
+import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
-from app import agent, db, policy, seed  # noqa: E402
+from app import agent, config, db, main, policy, seed, snapshot  # noqa: E402
 from app.main import app  # noqa: E402
 
 ORDER = {"amount": 50.0}
+
+
+@pytest.fixture(autouse=True)
+def fresh(monkeypatch, tmp_path):
+    """Each test starts from seeded samples, analyzed by the rules engine, with no saved snapshot."""
+    monkeypatch.setattr(snapshot, "PATH", tmp_path / "none.json")
+    main._last_reset["t"] = 0
+    main._live_ai.clear()
+    seed.seed()
+    for c in db.query("SELECT id FROM cases"):
+        agent.analyze(c["id"])
+
+
+def by_order(client, order_id):
+    return next(c for c in client.get("/api/cases").json() if c["order_id"] == order_id)
 
 
 def proposal(**kw):
@@ -17,6 +34,8 @@ def proposal(**kw):
             "reply": "Thanks for letting us know. Our team is reviewing your request and will follow up."}
     return {**base, **kw}
 
+
+# --- guard rails ---
 
 def test_a_clean_proposal_passes():
     assert policy.check_proposal(proposal(), ORDER, 0) == ([], "low")
@@ -43,42 +62,110 @@ def test_large_refunds_are_flagged_high_risk():
     assert risk == "high"
 
 
+# --- agent ---
+
 def test_rules_agent_follows_policy_on_the_samples():
-    seed.seed()
-    got = {c["order_id"]: agent.analyze(c["id"]) for c in db.query("SELECT id, order_id FROM cases")}
+    got = {c["order_id"]: c for c in db.query(db.CASE_SELECT)}
     assert got["ORD-1001"]["action"] == "refund_full"       # dead on arrival
     assert got["ORD-1002"]["action"] == "refund_full"       # not delivered, chargeback threat
     assert got["ORD-1003"]["action"] == "refund_partial"    # cosmetic scratch
     assert got["ORD-1004"]["action"] == "reject"            # changed mind after 50 days
     assert "Hola" in got["ORD-1005"]["reply"]               # replies in the buyer's language
     assert got["ORD-1002"]["risk"] == "high"                # $149 needs senior review
-    assert all(c["status"] == "proposed" for c in got.values())
+    assert all(c["status"] == "proposed" and c["ai_action"] == c["action"] for c in got.values())
 
 
-def test_approve_refunds_once_and_confirms_the_amount_only_afterwards():
+def test_an_analysis_from_before_a_reset_is_not_written():
+    case_id = db.one("SELECT id FROM cases WHERE order_id = 'ORD-1001'")["id"]
+    db.update_case(case_id, status="queued", action=None)
+    assert agent.analyze(case_id, still_current=lambda: False) is None
+    assert db.case_view(case_id)["status"] == "queued"
+
+
+def test_reviewer_corrections_are_fed_back_to_the_model():
     with TestClient(app) as client:
-        client.post("/api/reset")
-        for c in db.query("SELECT id FROM cases"):
-            agent.analyze(c["id"])
-        case = next(c for c in client.get("/api/cases").json() if c["order_id"] == "ORD-1001")
+        case = by_order(client, "ORD-1003")
+        client.patch(f"/api/cases/{case['id']}", json={"amount": 12.5})
+    rows = agent.recent_corrections()
+    assert len(rows) == 1 and rows[0]["ai_amount"] == 10.0 and rows[0]["amount"] == 12.5
+    text = agent._corrections_prompt(rows)
+    assert "you proposed refund_partial $10.00" in text and "changed it to refund_partial $12.50" in text
+
+
+def test_undoing_an_edit_back_to_the_ai_draft_removes_the_correction():
+    with TestClient(app) as client:
+        case = by_order(client, "ORD-1003")
+        client.patch(f"/api/cases/{case['id']}", json={"amount": 12.5})
+        client.patch(f"/api/cases/{case['id']}", json={"amount": 10.0})
+    assert agent.recent_corrections() == []
+
+
+# --- API ---
+
+def test_approve_refunds_once_records_who_decided_and_confirms_the_amount_only_afterwards():
+    with TestClient(app) as client:
+        case = by_order(client, "ORD-1001")
         assert "$" not in case["reply"]
 
         res = client.post("/api/cases/approve", json={"ids": [case["id"]]}).json()["results"][0]
         assert res["ok"] and res["refund_id"].startswith("DEMO-REF-")
-        after = next(c for c in client.get("/api/cases").json() if c["id"] == case["id"])
+        after = by_order(client, "ORD-1001")
         assert after["status"] == "refunded" and "$59.99" in after["final_message"] and after["refundable"] == 0
+        assert after["decided_by"] == "Reviewer (AI draft as proposed)" and after["decided_at"]
 
+        assert client.get(f"/api/cases/{case['id']}/refund-status").json()["status"] == "COMPLETED"
         again = client.post("/api/cases/approve", json={"ids": [case["id"]]}).json()["results"][0]
         assert not again["ok"]
 
 
 def test_editing_cannot_break_the_guard_rails():
     with TestClient(app) as client:
-        client.post("/api/reset")
-        for c in db.query("SELECT id FROM cases"):
-            agent.analyze(c["id"])
-        case = next(c for c in client.get("/api/cases").json() if c["order_id"] == "ORD-1003")
+        case = by_order(client, "ORD-1003")
         assert client.patch(f"/api/cases/{case['id']}", json={"amount": 500}).status_code == 422
         assert client.patch(f"/api/cases/{case['id']}", json={"reply": "We will refund $10."}).status_code == 422
         ok = client.patch(f"/api/cases/{case['id']}", json={"amount": 12.5})
         assert ok.status_code == 200 and ok.json()["edited"] == 1
+
+
+def test_the_demo_loads_the_saved_ai_run_without_calling_the_ai(tmp_path, monkeypatch):
+    saved = [{"order_id": "ORD-1001", "intent": "damaged", "sentiment": "calm", "confidence": 0.93,
+              "action": "refund_full", "amount": 59.99, "reasoning": "Dead on arrival.", "risk": "low",
+              "reply": "Sorry about that. Our team is reviewing your request.", "agent": "gemini:test",
+              "trace": [{"tool": "get_payment", "result": {"paypal_capture": {"id": "OLD", "status": "COMPLETED"}}}]}]
+    path = tmp_path / "snap.json"
+    path.write_text(json.dumps(saved))
+    monkeypatch.setattr(snapshot, "PATH", path)
+    monkeypatch.setattr(agent, "analyze", lambda *a, **k: pytest.fail("the AI must not run for saved cases"))
+    seed.seed()
+    assert snapshot.apply() == 1
+    case = db.one(db.CASE_SELECT + " WHERE c.order_id = 'ORD-1001'")
+    assert case["status"] == "proposed" and case["agent"] == "gemini:test (saved run)"
+    assert json.loads(case["trace"])[0]["result"]["paypal_capture"]["id"] == case["capture_id"]
+
+
+def test_the_public_demo_caps_live_ai_use(monkeypatch):
+    monkeypatch.setattr(config, "GEMINI_API_KEY", "x")
+    monkeypatch.setattr(config, "LIVE_AI_PER_HOUR", 2)
+    monkeypatch.setattr(main, "_enqueue", lambda case_id: None)
+    with TestClient(app) as client:
+        body = {"order_id": "ORD-1001", "subject": "Hi", "message": "It crackles."}
+        assert client.post("/api/cases", json=body).status_code == 200
+        assert client.post("/api/cases", json=body).status_code == 200
+        assert client.post("/api/cases", json=body).status_code == 429
+
+
+def test_reset_is_rate_limited():
+    with TestClient(app) as client:
+        assert client.post("/api/reset").status_code == 200
+        assert client.post("/api/reset").status_code == 429
+
+
+def test_a_reply_in_another_language_than_the_buyer_wrote_is_refused():
+    msg = "Never received my order. Tracking says the package is lost and I want my money back."
+    fr = "Bonjour Chloe, je suis vraiment désolée. Notre équipe examine votre demande et nous vous répondrons."
+    errors, _ = policy.check_proposal(proposal(reply=fr, amount=39.99), {"amount": 39.99}, 0, msg)
+    assert any("buyer wrote in English" in e for e in errors)
+    es_msg = "Hola, el micrófono no funciona, no se conecta con mi teléfono y la luz parpadea. Gracias."
+    es = "Hola Sofía, lamento mucho las molestias. Nuestro equipo está revisando su solicitud y le responderá pronto."
+    assert policy.check_proposal(proposal(reply=es, amount=39.99), {"amount": 39.99}, 0, es_msg)[0] == []
+    assert policy.check_proposal(proposal(amount=39.99), {"amount": 39.99}, 0, "Help!!")[0] == []
