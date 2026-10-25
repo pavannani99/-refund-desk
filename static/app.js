@@ -205,7 +205,7 @@ function refreshSummary() {
 function chartTheme() {
   const dark = matchMedia("(prefers-color-scheme: dark)").matches;
   return { baseTheme: dark ? "ag-default-dark" : "ag-default",
-    palette: { fills: ["#0b5fff", "#12a37a", "#e8a33b", "#c2410c", "#7c4ddb", "#0e9ac6", "#d0457b", "#6b7280"], strokes: ["transparent"] },
+    palette: { fills: ["#1f4fd8", "#12805c", "#d08a1e", "#b5452a", "#5b7aa8", "#2f8f9d", "#8a94a6", "#c9a227"], strokes: ["transparent"] },
     overrides: { common: { background: { visible: false } } } };
 }
 
@@ -215,9 +215,9 @@ function drawCharts(paid, proposed, refunded) {
   const intentData = Object.entries(counts).map(([k, v]) => ({ reason: k.replaceAll("_", " "), cases: v }));
   const moneyData = [
     { label: "Paid by these buyers", value: paid, color: "#94a3b8" },
-    { label: "Waiting for approval", value: proposed, color: "#7c4ddb" },
+    { label: "Waiting for approval", value: proposed, color: "#d08a1e" },
     { label: "Refunded", value: refunded, color: "#12a37a" },
-    { label: "Kept (policy)", value: paid - proposed - refunded, color: "#0b5fff" },
+    { label: "Kept (policy)", value: paid - proposed - refunded, color: "#1f4fd8" },
   ];
   const intentOptions = {
     container: $("#chartIntent"), theme: chartTheme(), data: intentData,
