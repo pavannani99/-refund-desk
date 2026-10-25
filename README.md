@@ -2,6 +2,8 @@
 
 **An AI refund agent for small PayPal sellers, with a person approving every payout.**
 
+**Live demo: https://refund-desk-mrf3.onrender.com** (PayPal sandbox and live Gemini; the free host sleeps when idle, so the first load can take about 50 seconds)
+
 ![Refund Desk review screen](docs/screenshot.png)
 
 Small shops lose hours every week to "it arrived broken", "where is my order" and PayPal disputes. Each one means reading the message, finding the order, checking the payment, checking the policy, deciding, writing a reply and issuing the refund. Fully automatic bots are risky: one wrong reply can promise a refund the seller never agreed to.
@@ -40,7 +42,7 @@ flowchart LR
 
 ## Test it in 60 seconds (judges)
 
-1. Run it (below). Twelve sample cases are already analyzed by the AI.
+1. Open the [live demo](https://refund-desk-mrf3.onrender.com), or run it yourself (below). Twelve sample cases are already analyzed by the AI.
 2. Click any row: you'll see the buyer's message, the AI's reasoning, every tool call it made, and whether the guard rails passed it.
 3. Double-click **Refund** on case #3 and try `500`. The guard rails refuse it. Try `12.50`: it's saved, and counted as a correction the AI learns from.
 4. Double-click **Reply** and type "We will refund you $10". It's refused, because a reply can't promise money before approval.
